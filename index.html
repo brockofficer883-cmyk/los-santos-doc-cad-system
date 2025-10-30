@@ -1,0 +1,255 @@
+<!-- =========================
+ Los Santos Department of Corrections CAD System
+ Version: 1.0 | LocalStorage-Based | Dark Tactical UI
+========================= -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Los Santos DOC CAD System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d1117;
+      color: #e6edf3;
+    }
+    header {
+      background: #111827;
+      padding: 15px 30px;
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #3b82f6;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+    .container {
+      padding: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.95rem;
+    }
+    input, select, textarea {
+      background: #111827;
+      color: #fff;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #374151;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: #111827;
+    }
+    .flex {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .btn-danger {
+      background: #dc2626;
+    }
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+  </style>
+</head>
+<body>
+  <header>Los Santos Department of Corrections CAD System</header>
+  <div class="container">
+
+    <!-- Dashboard -->
+    <div class="card">
+      <h2>📋 Dashboard</h2>
+      <div class="flex">
+        <button onclick="showSection('intake')">Inmate Intake</button>
+        <button onclick="showSection('roster')">Jail Roster</button>
+        <button onclick="showSection('reports')">Incident Reports</button>
+        <button onclick="showSection('admin')">Admin Panel</button>
+      </div>
+    </div>
+
+    <!-- Inmate Intake -->
+    <div id="intake" class="card" style="display:none;">
+      <h2>🧾 Inmate Intake</h2>
+      <input type="text" id="inmateName" placeholder="Inmate Name">
+      <input type="text" id="arrestingOfficer" placeholder="Arresting Officer">
+      <input type="text" id="department" placeholder="Department (LAPD, CHP, etc)">
+      <input type="text" id="charges" placeholder="Charges">
+      <input type="number" id="sentence" placeholder="Sentence Time (hours)">
+      <input type="text" id="cell" placeholder="Cell Number">
+      <button onclick="addInmate()">Book Inmate</button>
+    </div>
+
+    <!-- Jail Roster -->
+    <div id="roster" class="card" style="display:none;">
+      <h2>🏛 Jail Roster</h2>
+      <table id="rosterTable">
+        <thead>
+          <tr>
+            <th>Booking #</th>
+            <th>Name</th>
+            <th>Officer</th>
+            <th>Department</th>
+            <th>Charges</th>
+            <th>Sentence (hrs)</th>
+            <th>Cell</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Incident Reports -->
+    <div id="reports" class="card" style="display:none;">
+      <h2>📄 Incident Reports</h2>
+      <input type="text" id="reportOfficer" placeholder="Reporting Officer">
+      <input type="text" id="inmatesInvolved" placeholder="Inmates Involved">
+      <textarea id="reportDesc" placeholder="Incident Description"></textarea>
+      <button onclick="addReport()">Submit Report</button>
+
+      <table id="reportsTable">
+        <thead>
+          <tr>
+            <th>Officer</th>
+            <th>Inmates</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin" class="card" style="display:none;">
+      <h2>🔒 Admin Panel</h2>
+      <button onclick="clearAllData()" class="btn-danger">Clear All Data</button>
+    </div>
+  </div>
+
+  <script>
+    const inmates = JSON.parse(localStorage.getItem("inmates") || "[]");
+    const reports = JSON.parse(localStorage.getItem("reports") || "[]");
+
+    function showSection(id) {
+      document.querySelectorAll('.card').forEach(el => {
+        if (el.id && el.id !== id) el.style.display = 'none';
+      });
+      if (id) document.getElementById(id).style.display = 'block';
+      if (id === 'roster') renderRoster();
+      if (id === 'reports') renderReports();
+    }
+
+    function addInmate() {
+      const name = document.getElementById('inmateName').value.trim();
+      const officer = document.getElementById('arrestingOfficer').value.trim();
+      const dept = document.getElementById('department').value.trim();
+      const charges = document.getElementById('charges').value.trim();
+      const sentence = document.getElementById('sentence').value.trim();
+      const cell = document.getElementById('cell').value.trim();
+
+      if (!name || !officer) return alert("Please fill out all required fields.");
+
+      const inmate = {
+        id: Date.now(),
+        booking: 'DOC' + Math.floor(Math.random() * 100000),
+        name, officer, dept, charges, sentence, cell, status: "In Custody"
+      };
+      inmates.push(inmate);
+      localStorage.setItem("inmates", JSON.stringify(inmates));
+      alert("Inmate booked successfully!");
+      renderRoster();
+      showSection('roster');
+    }
+
+    function renderRoster() {
+      const tbody = document.querySelector("#rosterTable tbody");
+      tbody.innerHTML = "";
+      inmates.forEach(i => {
+        const row = `<tr>
+          <td>${i.booking}</td>
+          <td>${i.name}</td>
+          <td>${i.officer}</td>
+          <td>${i.dept}</td>
+          <td>${i.charges}</td>
+          <td>${i.sentence}</td>
+          <td>${i.cell}</td>
+          <td>${i.status}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    function addReport() {
+      const officer = document.getElementById('reportOfficer').value.trim();
+      const inmatesInvolved = document.getElementById('inmatesInvolved').value.trim();
+      const desc = document.getElementById('reportDesc').value.trim();
+
+      if (!officer || !desc) return alert("Please fill out all fields.");
+
+      reports.push({ officer, inmatesInvolved, desc });
+      localStorage.setItem("reports", JSON.stringify(reports));
+      renderReports();
+      alert("Report submitted.");
+      document.getElementById('reportOfficer').value = '';
+      document.getElementById('inmatesInvolved').value = '';
+      document.getElementById('reportDesc').value = '';
+    }
+
+    function renderReports() {
+      const tbody = document.querySelector("#reportsTable tbody");
+      tbody.innerHTML = "";
+      reports.forEach(r => {
+        const row = `<tr>
+          <td>${r.officer}</td>
+          <td>${r.inmatesInvolved}</td>
+          <td>${r.desc}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    function clearAllData() {
+      if (confirm("Are you sure you want to clear all data?")) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>
